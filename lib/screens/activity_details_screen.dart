@@ -2,8 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:geolocator/geolocator.dart' hide ActivityType;
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -27,8 +25,6 @@ class ActivityDetailsScreen extends StatefulWidget {
 }
 
 class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
-  bool _isFindingLocation = false;
-
   @override
   void initState() {
     super.initState();
@@ -417,19 +413,12 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                             SizedBox(
                               width: double.infinity,
                               child: OutlinedButton.icon(
-                                onPressed: _isFindingLocation
-                                    ? null
-                                    : () => _openLocationDirections(
-                                        activity.location,
-                                      ),
+                                onPressed: () =>
+                                    _openLocationDirections(activity.location),
                                 icon: const Icon(
                                   Icons.location_searching_outlined,
                                 ),
-                                label: Text(
-                                  _isFindingLocation
-                                      ? 'Finding location...'
-                                      : 'Find location',
-                                ),
+                                label: const Text('Find location'),
                               ),
                             ),
                             const SizedBox(height: AppTheme.paddingXLarge),
@@ -732,66 +721,18 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
   }
 
   Future<void> _openLocationDirections(String locationText) async {
-    if (_isFindingLocation) {
+    final destination = locationText.trim();
+    if (destination.isEmpty) {
+      _showLocationError(AppConstants.errorLocationNotFound);
       return;
     }
 
-    setState(() {
-      _isFindingLocation = true;
-    });
-
     try {
-      final destination = locationText.trim();
-      if (destination.isEmpty) {
-        _showLocationError(AppConstants.errorLocationNotFound);
-        return;
-      }
-
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        _showLocationError(
-          'Please enable location services to get directions.',
-        );
-        return;
-      }
-
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        _showLocationError(
-          'Location permission is required to get directions.',
-        );
-        return;
-      }
-
-      final currentPosition = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+      final mapsUrl = Uri.parse(
+        'https://www.google.com/maps/search/${Uri.encodeComponent(destination)}',
       );
-
-      List<Location> results;
-      try {
-        results = await locationFromAddress(destination);
-      } catch (_) {
-        _showLocationError(AppConstants.errorLocationNotFound);
-        return;
-      }
-
-      if (results.isEmpty) {
-        _showLocationError(AppConstants.errorLocationNotFound);
-        return;
-      }
-
-      final target = results.first;
-      final directionsUri = Uri.parse(
-        'https://www.google.com/maps/dir/?api=1&origin=${currentPosition.latitude},${currentPosition.longitude}&destination=${target.latitude},${target.longitude}&travelmode=driving',
-      );
-
       final launched = await launchUrl(
-        directionsUri,
+        mapsUrl,
         mode: LaunchMode.externalApplication,
       );
       if (!launched) {
@@ -799,12 +740,6 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
       }
     } catch (_) {
       _showLocationError(AppConstants.errorLocationNotFound);
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isFindingLocation = false;
-        });
-      }
     }
   }
 

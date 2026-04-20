@@ -1,7 +1,5 @@
 import 'dart:io';
 
-import 'package:geocoding/geocoding.dart';
-import 'package:geolocator/geolocator.dart' hide ActivityType;
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -279,60 +277,18 @@ class ActivityCard extends StatelessWidget {
     BuildContext context,
     String locationText,
   ) async {
+    final destination = locationText.trim();
+    if (destination.isEmpty) {
+      _showLocationError(context, AppConstants.errorLocationNotFound);
+      return;
+    }
+
     try {
-      final destination = locationText.trim();
-      if (destination.isEmpty) {
-        _showLocationError(context, AppConstants.errorLocationNotFound);
-        return;
-      }
-
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        _showLocationError(
-          context,
-          'Please enable location services to get directions.',
-        );
-        return;
-      }
-
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        _showLocationError(
-          context,
-          'Location permission is required to get directions.',
-        );
-        return;
-      }
-
-      final currentPosition = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+      final mapsUrl = Uri.parse(
+        'https://www.google.com/maps/search/${Uri.encodeComponent(destination)}',
       );
-
-      List<Location> results;
-      try {
-        results = await locationFromAddress(destination);
-      } catch (_) {
-        _showLocationError(context, AppConstants.errorLocationNotFound);
-        return;
-      }
-
-      if (results.isEmpty) {
-        _showLocationError(context, AppConstants.errorLocationNotFound);
-        return;
-      }
-
-      final target = results.first;
-      final directionsUri = Uri.parse(
-        'https://www.google.com/maps/dir/?api=1&origin=${currentPosition.latitude},${currentPosition.longitude}&destination=${target.latitude},${target.longitude}&travelmode=driving',
-      );
-
       final launched = await launchUrl(
-        directionsUri,
+        mapsUrl,
         mode: LaunchMode.externalApplication,
       );
       if (!launched) {
