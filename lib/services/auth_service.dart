@@ -19,10 +19,15 @@ class AuthService {
 
   bool get isAuthenticated => _currentUser != null;
 
-  User _buildMockUser({required String name, required String email}) {
+  User _buildMockUser({
+    required String name,
+    required String email,
+    String? phone,
+  }) {
     return User(
       name: name,
       email: email,
+      phone: phone,
       avatar: 'https://i.pravatar.cc/150?img=${const Uuid().v4().hashCode}',
     );
   }
@@ -30,10 +35,11 @@ class AuthService {
   Future<User> signup({
     required String name,
     required String email,
+    required String phone,
     required String password,
   }) async {
     if (!FirestoreService.isAvailable) {
-      final mockUser = _buildMockUser(name: name, email: email);
+      final mockUser = _buildMockUser(name: name, email: email, phone: phone);
       _currentUser = mockUser;
       return mockUser;
     }
@@ -58,6 +64,7 @@ class AuthService {
       id: firebaseUser.uid,
       name: normalizedName,
       email: normalizedEmail,
+      phone: phone.trim(),
       avatar: 'https://i.pravatar.cc/150?img=${firebaseUser.uid.hashCode}',
     );
     await _firestoreService.saveUser(user);
@@ -89,7 +96,9 @@ class AuthService {
         profile ??
         User(
           id: firebaseUser.uid,
-          name: (firebaseUser.displayName != null && firebaseUser.displayName!.trim().isNotEmpty)
+          name:
+              (firebaseUser.displayName != null &&
+                  firebaseUser.displayName!.trim().isNotEmpty)
               ? firebaseUser.displayName!.trim()
               : normalizedEmail.split('@')[0],
           email: firebaseUser.email ?? normalizedEmail,
@@ -142,6 +151,7 @@ class AuthService {
 
   Future<User> updateProfile({
     required String name,
+    String? phone,
     String? bio,
     String? avatar,
   }) async {
@@ -151,6 +161,7 @@ class AuthService {
 
     final updatedUser = _currentUser!.copyWith(
       name: name,
+      phone: phone,
       bio: bio,
       avatar: avatar,
     );
@@ -181,9 +192,10 @@ class AuthService {
       final fallback = User(
         id: firebaseUser.uid,
         name:
-            (firebaseUser.displayName != null && firebaseUser.displayName!.trim().isNotEmpty)
-                ? firebaseUser.displayName!.trim()
-                : 'User',
+            (firebaseUser.displayName != null &&
+                firebaseUser.displayName!.trim().isNotEmpty)
+            ? firebaseUser.displayName!.trim()
+            : 'User',
         email: firebaseUser.email ?? '',
         avatar: firebaseUser.photoURL,
       );

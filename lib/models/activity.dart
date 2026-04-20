@@ -12,6 +12,7 @@ class Activity {
   final int maxParticipants;
   final List<String> participantIds; // User IDs of participants
   final String createdBy; // User ID of creator
+  final String? creatorPhone;
   final DateTime createdAt;
   final bool isJoined;
 
@@ -26,11 +27,12 @@ class Activity {
     required this.maxParticipants,
     List<String>? participantIds,
     required this.createdBy,
+    this.creatorPhone,
     DateTime? createdAt,
     this.isJoined = false,
-  })  : id = id ?? const Uuid().v4(),
-        participantIds = participantIds ?? [],
-        createdAt = createdAt ?? DateTime.now();
+  }) : id = id ?? const Uuid().v4(),
+       participantIds = participantIds ?? [],
+       createdAt = createdAt ?? DateTime.now();
 
   // Get number of joined participants
   int get participantCount => participantIds.length;
@@ -61,6 +63,7 @@ class Activity {
       'maxParticipants': maxParticipants,
       'participantIds': participantIds,
       'createdBy': createdBy,
+      'creatorPhone': creatorPhone,
       'createdAt': createdAt.toIso8601String(),
       'isJoined': isJoined,
     };
@@ -82,6 +85,7 @@ class Activity {
       maxParticipants: (json['maxParticipants'] as num?)?.toInt() ?? 0,
       participantIds: List<String>.from(json['participantIds'] as List? ?? []),
       createdBy: json['createdBy'] as String,
+      creatorPhone: json['creatorPhone'] as String?,
       createdAt: _parseDateTime(json['createdAt']),
       isJoined: json['isJoined'] as bool? ?? false,
     );
@@ -122,6 +126,7 @@ class Activity {
     int? maxParticipants,
     List<String>? participantIds,
     String? createdBy,
+    String? creatorPhone,
     DateTime? createdAt,
     bool? isJoined,
   }) {
@@ -136,6 +141,7 @@ class Activity {
       maxParticipants: maxParticipants ?? this.maxParticipants,
       participantIds: participantIds ?? this.participantIds,
       createdBy: createdBy ?? this.createdBy,
+      creatorPhone: creatorPhone ?? this.creatorPhone,
       createdAt: createdAt ?? this.createdAt,
       isJoined: isJoined ?? this.isJoined,
     );

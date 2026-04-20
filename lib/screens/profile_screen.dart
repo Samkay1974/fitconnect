@@ -16,6 +16,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   late TextEditingController _nameController;
+  late TextEditingController _phoneController;
   late TextEditingController _bioController;
   bool _isEditMode = false;
 
@@ -23,6 +24,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _nameController = TextEditingController();
+    _phoneController = TextEditingController();
     _bioController = TextEditingController();
     _loadUserData();
   }
@@ -30,6 +32,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _phoneController.dispose();
     _bioController.dispose();
     super.dispose();
   }
@@ -38,16 +41,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final authProvider = context.read<AuthProvider>();
     if (authProvider.currentUser != null) {
       _nameController.text = authProvider.currentUser!.name;
+      _phoneController.text = authProvider.currentUser!.phone ?? '';
       _bioController.text = authProvider.currentUser!.bio ?? '';
     }
+  }
+
+  String? _validatePhone(String value) {
+    final normalizedPhone = value.replaceAll(RegExp(r'\D'), '');
+    if (normalizedPhone.isEmpty) {
+      return AppConstants.errorEmptyField;
+    }
+    if (normalizedPhone.length != 10) {
+      return AppConstants.errorInvalidPhoneNumber;
+    }
+    return null;
   }
 
   Future<void> _handleSaveProfile() async {
     final authProvider = context.read<AuthProvider>();
     final uiProvider = context.read<UiProvider>();
+    final phoneError = _validatePhone(_phoneController.text);
+
+    if (phoneError != null) {
+      uiProvider.showErrorMessage(phoneError);
+      return;
+    }
 
     final success = await authProvider.updateProfile(
       name: _nameController.text,
+      phone: _phoneController.text.replaceAll(RegExp(r'\D'), ''),
       bio: _bioController.text,
     );
 
@@ -70,9 +92,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await authProvider.logout();
 
     if (mounted) {
-      Navigator.of(context).pushReplacementNamed(
-        AppConstants.routeOnboarding,
-      );
+      Navigator.of(context).pushReplacementNamed(AppConstants.routeOnboarding);
     }
   }
 
@@ -106,9 +126,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: AppTheme.paddingXLarge),
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.of(context).pushReplacementNamed(
-                        AppConstants.routeLogin,
-                      );
+                      Navigator.of(
+                        context,
+                      ).pushReplacementNamed(AppConstants.routeLogin);
                     },
                     child: const Text('Login'),
                   ),
@@ -163,12 +183,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         user.email,
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
+                      if (user.phone != null && user.phone!.isNotEmpty) ...[
+                        const SizedBox(height: AppTheme.paddingXSmall),
+                        Text(
+                          user.phone!,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
                       const SizedBox(height: AppTheme.paddingMedium),
                       // Joined date
                       Text(
                         'Joined ${user.createdAt.year}-${user.createdAt.month.toString().padLeft(2, '0')}-${user.createdAt.day.toString().padLeft(2, '0')}',
-                        style: Theme.of(context).textTheme.bodySmall
-                            ?.copyWith(color: AppTheme.textSecondary),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppTheme.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -182,6 +210,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     label: 'Name',
                     controller: _nameController,
                     prefixIcon: Icons.person_outline,
+                  ),
+                  const SizedBox(height: AppTheme.paddingXLarge),
+                  CustomTextField(
+                    label: 'Phone Number',
+                    hint: 'Enter your 10-digit phone number',
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    prefixIcon: Icons.phone_outlined,
                   ),
                   const SizedBox(height: AppTheme.paddingXLarge),
                   CustomTextField(
@@ -231,8 +267,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       padding: const EdgeInsets.all(AppTheme.paddingLarge),
                       decoration: BoxDecoration(
                         color: AppTheme.backgroundColor,
-                        borderRadius:
-                            BorderRadius.circular(AppTheme.radiusMedium),
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radiusMedium,
+                        ),
                       ),
                       child: Text(
                         user.bio!,

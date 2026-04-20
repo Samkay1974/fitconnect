@@ -16,7 +16,8 @@ import '../widgets/primary_button.dart';
 class CreateActivityScreen extends StatefulWidget {
   final Activity? existingActivity;
 
-  const CreateActivityScreen({Key? key, this.existingActivity}) : super(key: key);
+  const CreateActivityScreen({Key? key, this.existingActivity})
+    : super(key: key);
 
   @override
   State<CreateActivityScreen> createState() => _CreateActivityScreenState();
@@ -173,12 +174,13 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
           ? await activityProvider.createActivity(
               title: _titleController.text,
               description: _descriptionController.text,
-            imageFilePath: _selectedImagePath,
+              imageFilePath: _selectedImagePath,
               type: _selectedType,
               location: _locationController.text,
               dateTime: _selectedDateTime,
               maxParticipants: maxParticipants,
               userId: authProvider.currentUser!.id,
+              creatorPhone: authProvider.currentUser!.phone,
               createdByName: authProvider.currentUser!.name,
             )
           : await activityProvider.updateActivity(
@@ -207,8 +209,11 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                 backgroundColor: AppTheme.successColor,
               ),
             );
-          if (widget.existingActivity == null && authProvider.currentUser != null) {
-            notificationProvider.fetchNotifications(authProvider.currentUser!.id);
+          if (widget.existingActivity == null &&
+              authProvider.currentUser != null) {
+            notificationProvider.fetchNotifications(
+              authProvider.currentUser!.id,
+            );
           }
           Future.delayed(const Duration(seconds: 1), () {
             if (mounted) {
@@ -220,7 +225,9 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
             ..hideCurrentSnackBar()
             ..showSnackBar(
               SnackBar(
-                content: Text(activityProvider.error ?? 'Failed to create activity'),
+                content: Text(
+                  activityProvider.error ?? 'Failed to create activity',
+                ),
                 backgroundColor: AppTheme.errorColor,
               ),
             );
@@ -233,7 +240,9 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.existingActivity == null ? 'Create Activity' : 'Edit Activity'),
+        title: Text(
+          widget.existingActivity == null ? 'Create Activity' : 'Edit Activity',
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -270,7 +279,9 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                     ),
                     decoration: BoxDecoration(
                       border: Border.all(color: AppTheme.borderColor),
-                      borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                      borderRadius: BorderRadius.circular(
+                        AppTheme.radiusMedium,
+                      ),
                     ),
                     child: DropdownButton<ActivityType>(
                       value: _selectedType,
@@ -287,9 +298,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                           .map(
                             (type) => DropdownMenuItem(
                               value: type,
-                              child: Text(
-                                '${type.emoji} ${type.displayName}',
-                              ),
+                              child: Text('${type.emoji} ${type.displayName}'),
                             ),
                           )
                           .toList(),
@@ -322,48 +331,53 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                       height: 170,
                       decoration: BoxDecoration(
                         border: Border.all(color: AppTheme.borderColor),
-                        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radiusMedium,
+                        ),
                         color: AppTheme.backgroundColor,
                       ),
                       child: _selectedImagePath != null
                           ? ClipRRect(
-                              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                              borderRadius: BorderRadius.circular(
+                                AppTheme.radiusMedium,
+                              ),
                               child: Image.file(
                                 File(_selectedImagePath!),
                                 fit: BoxFit.cover,
                               ),
                             )
                           : (widget.existingActivity?.imageUrl != null &&
-                                    widget.existingActivity!.imageUrl!.isNotEmpty)
-                              ? ClipRRect(
-                                  borderRadius:
-                                      BorderRadius.circular(AppTheme.radiusMedium),
-                                  child: Image.network(
-                                    widget.existingActivity!.imageUrl!,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => const Center(
-                                      child: Icon(
-                                        Icons.broken_image_outlined,
-                                        color: AppTheme.textTertiary,
-                                        size: 36,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              : const Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.add_photo_alternate_outlined,
-                                        color: AppTheme.textSecondary,
-                                        size: 32,
-                                      ),
-                                      SizedBox(height: 8),
-                                      Text('Tap to pick image from gallery'),
-                                    ],
+                                widget.existingActivity!.imageUrl!.isNotEmpty)
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(
+                                AppTheme.radiusMedium,
+                              ),
+                              child: Image.network(
+                                widget.existingActivity!.imageUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Center(
+                                  child: Icon(
+                                    Icons.broken_image_outlined,
+                                    color: AppTheme.textTertiary,
+                                    size: 36,
                                   ),
                                 ),
+                              ),
+                            )
+                          : const Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.add_photo_alternate_outlined,
+                                    color: AppTheme.textSecondary,
+                                    size: 32,
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text('Tap to pick image from gallery'),
+                                ],
+                              ),
+                            ),
                     ),
                   ),
                   const SizedBox(height: AppTheme.paddingXLarge),
@@ -390,8 +404,9 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                       padding: const EdgeInsets.all(AppTheme.paddingMedium),
                       decoration: BoxDecoration(
                         border: Border.all(color: AppTheme.borderColor),
-                        borderRadius:
-                            BorderRadius.circular(AppTheme.radiusMedium),
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radiusMedium,
+                        ),
                       ),
                       child: Row(
                         children: [
@@ -406,8 +421,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                               children: [
                                 Text(
                                   '${_selectedDateTime.year}-${_selectedDateTime.month.toString().padLeft(2, '0')}-${_selectedDateTime.day.toString().padLeft(2, '0')}',
-                                  style:
-                                      Theme.of(context).textTheme.bodyMedium,
+                                  style: Theme.of(context).textTheme.bodyMedium,
                                 ),
                                 Text(
                                   '${_selectedDateTime.hour.toString().padLeft(2, '0')}:${_selectedDateTime.minute.toString().padLeft(2, '0')}',

@@ -16,6 +16,7 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
+  late TextEditingController _phoneController;
   late TextEditingController _emailController;
   late TextEditingController _passwordController;
   late TextEditingController _confirmPasswordController;
@@ -24,6 +25,7 @@ class _SignupScreenState extends State<SignupScreen> {
   void initState() {
     super.initState();
     _nameController = TextEditingController();
+    _phoneController = TextEditingController();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
     _confirmPasswordController = TextEditingController();
@@ -32,6 +34,7 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _phoneController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -51,6 +54,17 @@ class _SignupScreenState extends State<SignupScreen> {
     }
     if (!RegExp(r"^[a-zA-Z\s'\-]+$").hasMatch(input)) {
       return AppConstants.errorInvalidName;
+    }
+    return null;
+  }
+
+  String? _validatePhone(String? value) {
+    final digitsOnly = (value ?? '').replaceAll(RegExp(r'\D'), '');
+    if (digitsOnly.isEmpty) {
+      return AppConstants.errorEmptyField;
+    }
+    if (digitsOnly.length != 10) {
+      return AppConstants.errorInvalidPhoneNumber;
     }
     return null;
   }
@@ -106,6 +120,7 @@ class _SignupScreenState extends State<SignupScreen> {
       final success = await authProvider.signup(
         name: _nameController.text.trim(),
         email: _emailController.text.trim().toLowerCase(),
+        phone: _phoneController.text.replaceAll(RegExp(r'\D'), ''),
         password: _passwordController.text,
       );
 
@@ -177,6 +192,15 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                       const SizedBox(height: AppTheme.paddingXLarge),
                       CustomTextField(
+                        label: 'Phone Number',
+                        hint: 'Enter a 10-digit phone number',
+                        controller: _phoneController,
+                        validator: _validatePhone,
+                        keyboardType: TextInputType.phone,
+                        prefixIcon: Icons.phone_outlined,
+                      ),
+                      const SizedBox(height: AppTheme.paddingXLarge),
+                      CustomTextField(
                         label: 'Password',
                         hint: 'Enter your password',
                         controller: _passwordController,
@@ -206,6 +230,32 @@ class _SignupScreenState extends State<SignupScreen> {
 
                 const SizedBox(height: AppTheme.paddingXLarge),
 
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(AppTheme.paddingLarge),
+                  decoration: BoxDecoration(
+                    color: AppTheme.backgroundColor,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                    border: Border.all(color: AppTheme.borderColor),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppConstants.termsAndPoliciesTitle,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: AppTheme.paddingSmall),
+                      Text(
+                        AppConstants.termsAndPoliciesDisclaimer,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: AppTheme.paddingXLarge),
+
                 // Login link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -216,9 +266,9 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.of(context).pushReplacementNamed(
-                          AppConstants.routeLogin,
-                        );
+                        Navigator.of(
+                          context,
+                        ).pushReplacementNamed(AppConstants.routeLogin);
                       },
                       child: const Text('Login'),
                     ),

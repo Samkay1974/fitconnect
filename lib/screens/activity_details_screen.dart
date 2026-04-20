@@ -2,8 +2,11 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart' hide ActivityType;
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../config/app_theme.dart';
 import '../config/app_constants.dart';
 import '../models/activity_type.dart';
@@ -16,16 +19,16 @@ import '../widgets/primary_button.dart';
 class ActivityDetailsScreen extends StatefulWidget {
   final String activityId;
 
-  const ActivityDetailsScreen({
-    Key? key,
-    required this.activityId,
-  }) : super(key: key);
+  const ActivityDetailsScreen({Key? key, required this.activityId})
+    : super(key: key);
 
   @override
   State<ActivityDetailsScreen> createState() => _ActivityDetailsScreenState();
 }
 
 class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
+  bool _isFindingLocation = false;
+
   @override
   void initState() {
     super.initState();
@@ -53,7 +56,9 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
       if (success) {
         uiProvider.showSuccessMessage(AppConstants.successActivityJoined);
       } else {
-        uiProvider.showErrorMessage(activityProvider.error ?? 'Failed to join activity');
+        uiProvider.showErrorMessage(
+          activityProvider.error ?? 'Failed to join activity',
+        );
       }
     }
   }
@@ -77,7 +82,9 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
       if (success) {
         uiProvider.showSuccessMessage(AppConstants.successActivityLeft);
       } else {
-        uiProvider.showErrorMessage(activityProvider.error ?? 'Failed to leave activity');
+        uiProvider.showErrorMessage(
+          activityProvider.error ?? 'Failed to leave activity',
+        );
       }
     }
   }
@@ -121,7 +128,9 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
       return;
     }
 
-    uiProvider.showErrorMessage(activityProvider.error ?? 'Failed to delete activity');
+    uiProvider.showErrorMessage(
+      activityProvider.error ?? 'Failed to delete activity',
+    );
   }
 
   Future<void> _handleEditActivity() async {
@@ -130,10 +139,9 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
       return;
     }
 
-    await Navigator.of(context).pushNamed(
-      AppConstants.routeCreateActivity,
-      arguments: activity,
-    );
+    await Navigator.of(
+      context,
+    ).pushNamed(AppConstants.routeCreateActivity, arguments: activity);
 
     if (mounted) {
       context.read<ActivityProvider>().getActivityById(widget.activityId);
@@ -153,7 +161,8 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
           Consumer2<ActivityProvider, AuthProvider>(
             builder: (context, activityProvider, authProvider, _) {
               final activity = activityProvider.selectedActivity;
-              final isCreator = activity != null &&
+              final isCreator =
+                  activity != null &&
                   authProvider.currentUser != null &&
                   activity.createdBy == authProvider.currentUser!.id;
               if (!isCreator) {
@@ -183,7 +192,9 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
               return Consumer<UiProvider>(
                 builder: (context, uiProvider, _) {
                   if (activityProvider.isLoading) {
-                    return const LoadingIndicator(message: 'Loading activity...');
+                    return const LoadingIndicator(
+                      message: 'Loading activity...',
+                    );
                   }
 
                   final activity = activityProvider.selectedActivity;
@@ -214,8 +225,9 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
 
                   final dateFormatter = DateFormat('EEEE, MMM dd, yyyy HH:mm');
                   final dateStr = dateFormatter.format(activity.dateTime);
-                  final isJoined = activity.participantIds
-                      .contains(authProvider.currentUser?.id);
+                  final isJoined = activity.participantIds.contains(
+                    authProvider.currentUser?.id,
+                  );
 
                   return Stack(
                     children: [
@@ -229,22 +241,28 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (activity.imageUrl != null && activity.imageUrl!.isNotEmpty)
+                            if (activity.imageUrl != null &&
+                                activity.imageUrl!.isNotEmpty)
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(22),
                                 child: _buildActivityImage(activity.imageUrl!),
                               ),
-                            if (activity.imageUrl != null && activity.imageUrl!.isNotEmpty)
+                            if (activity.imageUrl != null &&
+                                activity.imageUrl!.isNotEmpty)
                               const SizedBox(height: AppTheme.paddingLarge),
                             Container(
                               width: double.infinity,
-                              padding: const EdgeInsets.all(AppTheme.paddingXLarge),
+                              padding: const EdgeInsets.all(
+                                AppTheme.paddingXLarge,
+                              ),
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
                                     AppTheme.primaryDark,
                                     AppTheme.primaryColor,
-                                    AppTheme.primaryLight.withValues(alpha: 0.95),
+                                    AppTheme.primaryLight.withValues(
+                                      alpha: 0.95,
+                                    ),
                                   ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
@@ -255,7 +273,8 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Container(
                                         padding: const EdgeInsets.symmetric(
@@ -263,7 +282,9 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                                           vertical: AppTheme.paddingSmall,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withValues(alpha: 0.2),
+                                          color: Colors.white.withValues(
+                                            alpha: 0.2,
+                                          ),
                                           borderRadius: BorderRadius.circular(
                                             AppTheme.radiusSmall,
                                           ),
@@ -293,7 +314,9 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                                             vertical: AppTheme.paddingSmall,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: Colors.white.withValues(alpha: 0.2),
+                                            color: Colors.white.withValues(
+                                              alpha: 0.2,
+                                            ),
                                             borderRadius: BorderRadius.circular(
                                               AppTheme.radiusSmall,
                                             ),
@@ -311,20 +334,31 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                                   const SizedBox(height: AppTheme.paddingLarge),
                                   Text(
                                     activity.title,
-                                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .displaySmall
+                                        ?.copyWith(
                                           color: Colors.white,
                                           fontWeight: FontWeight.w800,
-                                    ),
+                                        ),
                                   ),
-                                  const SizedBox(height: AppTheme.paddingMedium),
+                                  const SizedBox(
+                                    height: AppTheme.paddingMedium,
+                                  ),
                                   Row(
                                     children: [
-                                      const Icon(Icons.location_on, color: Colors.white70, size: 18),
+                                      const Icon(
+                                        Icons.location_on,
+                                        color: Colors.white70,
+                                        size: 18,
+                                      ),
                                       const SizedBox(width: 6),
                                       Expanded(
                                         child: Text(
                                           activity.location,
-                                          style: const TextStyle(color: Colors.white),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -336,12 +370,18 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
 
                             // Description
                             Container(
-                              padding: const EdgeInsets.all(AppTheme.paddingLarge),
+                              padding: const EdgeInsets.all(
+                                AppTheme.paddingLarge,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white,
-                                borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.radiusLarge,
+                                ),
                                 border: Border.all(
-                                  color: AppTheme.primaryLight.withValues(alpha: 0.22),
+                                  color: AppTheme.primaryLight.withValues(
+                                    alpha: 0.22,
+                                  ),
                                 ),
                               ),
                               child: Column(
@@ -349,12 +389,16 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                                 children: [
                                   Text(
                                     'About this activity',
-                                    style: Theme.of(context).textTheme.titleMedium,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
                                   ),
                                   const SizedBox(height: AppTheme.paddingSmall),
                                   Text(
                                     activity.description,
-                                    style: Theme.of(context).textTheme.bodyMedium,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium,
                                   ),
                                 ],
                               ),
@@ -369,6 +413,25 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                               'Location',
                               activity.location,
                             ),
+                            const SizedBox(height: AppTheme.paddingMedium),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: _isFindingLocation
+                                    ? null
+                                    : () => _openLocationDirections(
+                                        activity.location,
+                                      ),
+                                icon: const Icon(
+                                  Icons.location_searching_outlined,
+                                ),
+                                label: Text(
+                                  _isFindingLocation
+                                      ? 'Finding location...'
+                                      : 'Find location',
+                                ),
+                              ),
+                            ),
                             const SizedBox(height: AppTheme.paddingXLarge),
                             _buildDetailRow(
                               context,
@@ -378,6 +441,60 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                             ),
                             const SizedBox(height: AppTheme.paddingXXLarge),
 
+                            if (activity.creatorPhone != null &&
+                                activity.creatorPhone!.trim().isNotEmpty) ...[
+                              Text(
+                                'Need more information?',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: AppTheme.paddingMedium),
+                              Container(
+                                padding: const EdgeInsets.all(
+                                  AppTheme.paddingLarge,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.backgroundColor,
+                                  borderRadius: BorderRadius.circular(
+                                    AppTheme.radiusMedium,
+                                  ),
+                                  border: Border.all(
+                                    color: AppTheme.primaryLight.withValues(
+                                      alpha: 0.22,
+                                    ),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.phone_outlined,
+                                      color: AppTheme.primaryDark,
+                                    ),
+                                    const SizedBox(
+                                      width: AppTheme.paddingMedium,
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        'Call the organizer directly from your phone.',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium,
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      width: AppTheme.paddingMedium,
+                                    ),
+                                    OutlinedButton.icon(
+                                      onPressed: () =>
+                                          _callCreator(activity.creatorPhone!),
+                                      icon: const Icon(Icons.call_outlined),
+                                      label: const Text('Call'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: AppTheme.paddingXXLarge),
+                            ],
+
                             // Participants section
                             Text(
                               'Participants',
@@ -385,13 +502,18 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                             ),
                             const SizedBox(height: AppTheme.paddingMedium),
                             Container(
-                              padding: const EdgeInsets.all(AppTheme.paddingLarge),
+                              padding: const EdgeInsets.all(
+                                AppTheme.paddingLarge,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppTheme.backgroundColor,
-                                borderRadius:
-                                    BorderRadius.circular(AppTheme.radiusMedium),
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.radiusMedium,
+                                ),
                                 border: Border.all(
-                                  color: AppTheme.primaryLight.withValues(alpha: 0.22),
+                                  color: AppTheme.primaryLight.withValues(
+                                    alpha: 0.22,
+                                  ),
                                 ),
                               ),
                               child: Column(
@@ -406,18 +528,18 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                                         children: [
                                           Text(
                                             '${activity.participantCount} of ${activity.maxParticipants} joined',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .titleMedium,
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.titleMedium,
                                           ),
                                           const SizedBox(
                                             height: AppTheme.paddingSmall,
                                           ),
                                           Text(
                                             '${activity.availableSpots} spot${activity.availableSpots != 1 ? 's' : ''} available',
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodySmall,
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodySmall,
                                           ),
                                         ],
                                       ),
@@ -436,7 +558,8 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                                       AppTheme.radiusSmall,
                                     ),
                                     child: LinearProgressIndicator(
-                                      value: activity.participantCount /
+                                      value:
+                                          activity.participantCount /
                                           activity.maxParticipants,
                                       minHeight: 6,
                                       backgroundColor: AppTheme.borderColor,
@@ -519,7 +642,9 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border(
-            top: BorderSide(color: AppTheme.primaryLight.withValues(alpha: 0.2)),
+            top: BorderSide(
+              color: AppTheme.primaryLight.withValues(alpha: 0.2),
+            ),
           ),
         ),
         child: Consumer2<ActivityProvider, AuthProvider>(
@@ -527,8 +652,9 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
             final activity = activityProvider.selectedActivity;
             if (activity == null) return const SizedBox.shrink();
 
-            final isJoined = activity.participantIds
-                .contains(authProvider.currentUser?.id);
+            final isJoined = activity.participantIds.contains(
+              authProvider.currentUser?.id,
+            );
             final isFull = activity.isFull && !isJoined;
 
             return PrimaryButton(
@@ -578,26 +704,19 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          color: AppTheme.primaryColor,
-          size: 24,
-        ),
+        Icon(icon, color: AppTheme.primaryColor, size: 24),
         const SizedBox(width: AppTheme.paddingMedium),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+              Text(label, style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(height: AppTheme.paddingSmall),
               Text(
                 value,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
               ),
             ],
           ),
@@ -606,8 +725,104 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
     );
   }
 
+  Future<void> _callCreator(String phoneNumber) async {
+    final normalizedPhone = phoneNumber.replaceAll(RegExp(r'\s+'), '');
+    final uri = Uri(scheme: 'tel', path: normalizedPhone);
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _openLocationDirections(String locationText) async {
+    if (_isFindingLocation) {
+      return;
+    }
+
+    setState(() {
+      _isFindingLocation = true;
+    });
+
+    try {
+      final destination = locationText.trim();
+      if (destination.isEmpty) {
+        _showLocationError(AppConstants.errorLocationNotFound);
+        return;
+      }
+
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        _showLocationError(
+          'Please enable location services to get directions.',
+        );
+        return;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        _showLocationError(
+          'Location permission is required to get directions.',
+        );
+        return;
+      }
+
+      final currentPosition = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      List<Location> results;
+      try {
+        results = await locationFromAddress(destination);
+      } catch (_) {
+        _showLocationError(AppConstants.errorLocationNotFound);
+        return;
+      }
+
+      if (results.isEmpty) {
+        _showLocationError(AppConstants.errorLocationNotFound);
+        return;
+      }
+
+      final target = results.first;
+      final directionsUri = Uri.parse(
+        'https://www.google.com/maps/dir/?api=1&origin=${currentPosition.latitude},${currentPosition.longitude}&destination=${target.latitude},${target.longitude}&travelmode=driving',
+      );
+
+      final launched = await launchUrl(
+        directionsUri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        _showLocationError(AppConstants.errorLocationNotFound);
+      }
+    } catch (_) {
+      _showLocationError(AppConstants.errorLocationNotFound);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isFindingLocation = false;
+        });
+      }
+    }
+  }
+
+  void _showLocationError(String message) {
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: AppTheme.errorColor),
+      );
+  }
+
   Widget _buildActivityImage(String imageUrl) {
-    final isNetworkImage = imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
+    final isNetworkImage =
+        imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
     if (isNetworkImage || kIsWeb) {
       return Image.network(
         imageUrl,

@@ -4,6 +4,7 @@ class User {
   final String id;
   final String name;
   final String email;
+  final String? phone;
   final String? avatar;
   final String? bio;
   final DateTime createdAt;
@@ -12,11 +13,12 @@ class User {
     String? id,
     required this.name,
     required this.email,
+    this.phone,
     this.avatar,
     this.bio,
     DateTime? createdAt,
-  })  : id = id ?? const Uuid().v4(),
-        createdAt = createdAt ?? DateTime.now();
+  }) : id = id ?? const Uuid().v4(),
+       createdAt = createdAt ?? DateTime.now();
 
   // Convert User to JSON
   Map<String, dynamic> toJson() {
@@ -24,6 +26,7 @@ class User {
       'id': id,
       'name': name,
       'email': email,
+      'phone': phone,
       'avatar': avatar,
       'bio': bio,
       'createdAt': createdAt.toIso8601String(),
@@ -36,6 +39,7 @@ class User {
       id: json['id'] as String?,
       name: json['name'] as String,
       email: json['email'] as String,
+      phone: json['phone'] as String?,
       avatar: json['avatar'] as String?,
       bio: json['bio'] as String?,
       createdAt: json['createdAt'] != null
@@ -49,6 +53,7 @@ class User {
     String? id,
     String? name,
     String? email,
+    String? phone,
     String? avatar,
     String? bio,
     DateTime? createdAt,
@@ -57,6 +62,7 @@ class User {
       id: id ?? this.id,
       name: name ?? this.name,
       email: email ?? this.email,
+      phone: phone ?? this.phone,
       avatar: avatar ?? this.avatar,
       bio: bio ?? this.bio,
       createdAt: createdAt ?? this.createdAt,

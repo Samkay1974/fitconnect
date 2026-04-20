@@ -53,12 +53,13 @@ class AppConstants {
   static const String assetsIconsPath = 'assets/icons/';
 
   // Mock data
-  static const String mockAvatarUrl =
-      'https://i.pravatar.cc/150?img=';
+  static const String mockAvatarUrl = 'https://i.pravatar.cc/150?img=';
 
   // Error Messages
-  static const String errorNetworkConnection = 'Network connection failed. Please try again.';
-  static const String errorServerError = 'Server error. Please try again later.';
+  static const String errorNetworkConnection =
+      'Network connection failed. Please try again.';
+  static const String errorServerError =
+      'Server error. Please try again later.';
   static const String errorUnauthorized = 'Unauthorized. Please login again.';
   static const String errorNotFound = 'Resource not found.';
   static const String errorInvalidCredentials = 'Invalid email or password.';
@@ -66,13 +67,23 @@ class AppConstants {
   static const String errorPasswordMismatch = 'Passwords do not match.';
   static const String errorEmptyField = 'This field cannot be empty.';
   static const String errorInvalidEmail = 'Please enter a valid email.';
-  static const String errorWeakPassword = 'Password must be at least 8 characters.';
-    static const String errorPasswordComplexity =
+  static const String errorInvalidPhoneNumber =
+      'Phone number must be exactly 10 digits.';
+  static const String errorWeakPassword =
+      'Password must be at least 8 characters.';
+  static const String errorPasswordComplexity =
       'Password must include upper, lower, number, and special character.';
-    static const String errorInvalidName =
+  static const String errorInvalidName =
       'Name can only include letters, spaces, hyphens, and apostrophes.';
-    static const String errorInputTooLong =
+  static const String errorInputTooLong =
       'Input is too long. Please shorten it and try again.';
+  static const String errorLocationNotFound =
+      'Location not found,contact organizer';
+
+  // Terms and Policies
+  static const String termsAndPoliciesTitle = 'Terms & Policies';
+  static const String termsAndPoliciesDisclaimer =
+      'FitConnect assumes all events listed on the platform are free and does not require any payment to join or participate. Any payment made to another person on the platform is strictly between the users involved, and FitConnect is not responsible or liable for those payments or disputes.';
 
   // Success Messages
   static const String successLoginSuccess = 'Login successful!';

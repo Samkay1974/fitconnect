@@ -29,9 +29,11 @@ class ActivityProvider extends ChangeNotifier {
   // Getters
   List<Activity> get activities {
     final hasActiveFilters =
-        (_selectedType != null) || (_searchQuery != null && _searchQuery!.isNotEmpty);
+        (_selectedType != null) ||
+        (_searchQuery != null && _searchQuery!.isNotEmpty);
     return hasActiveFilters ? _filteredActivities : _activities;
   }
+
   Activity? get selectedActivity => _selectedActivity;
   List<Activity> get userJoinedActivities => _userJoinedActivities;
   List<Activity> get userCreatedActivities => _userCreatedActivities;
@@ -136,9 +138,15 @@ class ActivityProvider extends ChangeNotifier {
 
     if (_searchQuery != null && _searchQuery!.isNotEmpty) {
       _filteredActivities = _filteredActivities
-          .where((activity) =>
-              activity.title.toLowerCase().contains(_searchQuery!.toLowerCase()) ||
-              activity.location.toLowerCase().contains(_searchQuery!.toLowerCase()))
+          .where(
+            (activity) =>
+                activity.title.toLowerCase().contains(
+                  _searchQuery!.toLowerCase(),
+                ) ||
+                activity.location.toLowerCase().contains(
+                  _searchQuery!.toLowerCase(),
+                ),
+          )
           .toList();
     }
   }
@@ -154,6 +162,7 @@ class ActivityProvider extends ChangeNotifier {
     required DateTime dateTime,
     required int maxParticipants,
     required String userId,
+    String? creatorPhone,
     String? createdByName,
   }) async {
     _isLoading = true;
@@ -171,6 +180,7 @@ class ActivityProvider extends ChangeNotifier {
         dateTime: dateTime,
         maxParticipants: maxParticipants,
         userId: userId,
+        creatorPhone: creatorPhone,
         createdByName: createdByName,
       );
       _activities.add(newActivity);
@@ -261,7 +271,10 @@ class ActivityProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> updateActivity(Activity activity, {String? imageFilePath}) async {
+  Future<bool> updateActivity(
+    Activity activity, {
+    String? imageFilePath,
+  }) async {
     _isLoading = true;
     _error = null;
     notifyListeners();

@@ -140,6 +140,7 @@ class ActivityService {
     required DateTime dateTime,
     required int maxParticipants,
     required String userId,
+    String? creatorPhone,
     String? createdByName,
   }) async {
     final resolvedImageUrl = await _resolveImageUrl(
@@ -157,6 +158,7 @@ class ActivityService {
       dateTime: dateTime,
       maxParticipants: maxParticipants,
       createdBy: userId,
+      creatorPhone: creatorPhone,
     );
 
     if (!FirestoreService.isAvailable) {
@@ -226,7 +228,9 @@ class ActivityService {
     final updatedActivity = activity.copyWith(imageUrl: resolvedImageUrl);
 
     if (!FirestoreService.isAvailable) {
-      final index = _mockActivities.indexWhere((a) => a.id == updatedActivity.id);
+      final index = _mockActivities.indexWhere(
+        (a) => a.id == updatedActivity.id,
+      );
       if (index == -1) {
         throw Exception('Activity not found');
       }
@@ -336,14 +340,19 @@ class ActivityService {
     final now = DateTime.now();
     final reminderWindowEnd = now.add(const Duration(hours: 24));
 
-    final createdActivities = await _firestoreService.getActivitiesCreatedBy(userId);
-    final joinedActivities = await _firestoreService.getActivitiesJoinedBy(userId);
+    final createdActivities = await _firestoreService.getActivitiesCreatedBy(
+      userId,
+    );
+    final joinedActivities = await _firestoreService.getActivitiesJoinedBy(
+      userId,
+    );
     final allActivities = <String, Activity>{
       for (final activity in createdActivities) activity.id: activity,
       for (final activity in joinedActivities) activity.id: activity,
     }.values.toList();
 
-    final existingNotifications = await _notificationService.getNotificationsForUser(userId);
+    final existingNotifications = await _notificationService
+        .getNotificationsForUser(userId);
     final reminderKeys = existingNotifications
         .where((n) => n.notificationType == 'event_reminder_24h')
         .map((n) => n.activityId)
@@ -351,7 +360,8 @@ class ActivityService {
 
     for (final activity in allActivities) {
       final isWithinReminderWindow =
-          activity.dateTime.isAfter(now) && activity.dateTime.isBefore(reminderWindowEnd);
+          activity.dateTime.isAfter(now) &&
+          activity.dateTime.isBefore(reminderWindowEnd);
       if (!isWithinReminderWindow) {
         continue;
       }
@@ -410,10 +420,9 @@ class ActivityService {
 
     request.fields['upload_preset'] = AppConstants.cloudinaryUploadPreset;
     request.fields['folder'] = AppConstants.cloudinaryUploadFolder;
-    request.fields['public_id'] = 'activity_${userId}_${DateTime.now().millisecondsSinceEpoch}';
-    request.files.add(
-      await http.MultipartFile.fromPath('file', imageFilePath),
-    );
+    request.fields['public_id'] =
+        'activity_${userId}_${DateTime.now().millisecondsSinceEpoch}';
+    request.files.add(await http.MultipartFile.fromPath('file', imageFilePath));
 
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
